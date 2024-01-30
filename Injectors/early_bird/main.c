@@ -80,3 +80,4 @@ int main() {
     ResumeThread(threadHandle);
 
     return 0;
+}
