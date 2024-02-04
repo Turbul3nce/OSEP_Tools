@@ -4,7 +4,7 @@ This repository is dedicated to any tools, notes, and tips accumulated or create
 
 ## Contents
 
-- [Tools](#tools)
+- [Injectors](/injectors)
 - [Tips](#tips)
 
 ## Usage
@@ -13,5 +13,5 @@ Feel free to explore, learn, and contribute to this repository. If you have any 
 
 ## Acknowledgments
 
-The OSEP material was great! Alittle dated, but sufficeint. I did use a handful of other resources, such as: 
+The OSEP material was great! A little dated in certain areas, but sufficeint. I did use a handful of other resources, such as Bishop Fox and other students on GitHub.   
  
