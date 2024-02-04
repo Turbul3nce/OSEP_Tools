@@ -1,6 +1,6 @@
-# OSEP Injectors
+# Injectors
 
-This repository contains loaders and injectors developed during the Offensive Security Exploitation Professional (OSEP) exam from Offensive Security's course.
+This repository contains injectors developed during the Offensive Security Experienced Professional (OSEP) exam from Offensive Security's course.
 
 ## Overview
 
@@ -17,15 +17,7 @@ The loaders and injectors in this repository are tools crafted during OSEP train
 
 ## Usage
 
-Provide any specific usage instructions, dependencies, or considerations for using the loaders and injectors.
-
-## Contributing
-
-Feel free to contribute by adding new loaders, improving existing ones, or suggesting enhancements. Follow the [contributing guidelines](CONTRIBUTING.md) for more information.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
+For any specific usage instructions, dependencies, or considerations for using the injectors, please see additional READMEs.
 
 Happy hacking!
 
