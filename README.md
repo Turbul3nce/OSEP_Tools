@@ -1,12 +1,10 @@
 # Overview
 
-This repository is dedicated to any tools, code, notes, and tips accumulated or created during my Offensive Security Experienced Professional (OSEP) training.
+This repository is dedicated to any tools, notes, and tips accumulated or created during my Offensive Security Experienced Professional (OSEP) training.
 
 ## Contents
 
 - [Tools](#tools)
-- [Code](#code)
-- [Notes](#notes)
 - [Tips](#tips)
 
 ## Usage
