@@ -4,7 +4,7 @@ This repository contains injectors developed during the Offensive Security Exper
 
 ## Overview
 
-The loaders and injectors in this repository are tools crafted during OSEP training for various scenarios and challenges. Each directory represents a distinct injector, designed to assist with specific tasks during penetration testing and exploitation exercises.
+The loaders and injectors in this repository are tools crafted or used during OSEP training for various scenarios and challenges. Each directory represents a distinct injector, designed to assist with injecting malicious code into processes and bypassing AV.
 
 ## Injectors => (Pr0ce$$)
 
