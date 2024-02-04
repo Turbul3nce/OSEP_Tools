@@ -21,4 +21,6 @@ For any specific usage instructions, dependencies, or considerations for using t
 
 Happy hacking!
 
+## Acknowledgements
 
+Credit to Bishop Fox, OffSec, and other students found on GitHub. 
