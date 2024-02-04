@@ -10,7 +10,7 @@ The loaders and injectors in this repository are tools crafted or used during OS
 
 | Technique            | Description                      |
 |----------------------|----------------------------------|
-| [Early_Bird](./early_bird) | Create process and inject code into it before the main thread executes + simple sandbox evasions.          |
+| [Early_Bird](./early_bird) | Create process and inject code into it before the main thread executes + simple sleep sandbox evasion.          |
 // | ... | ...         |
 // | ... | ...         |
 // | ...                  | ...                              |
