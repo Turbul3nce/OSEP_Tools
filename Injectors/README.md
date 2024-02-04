@@ -17,7 +17,7 @@ The loaders and injectors in this repository are tools crafted or used during OS
 
 ## Usage
 
-For any specific usage instructions, dependencies, or considerations for using the injectors, please see additional READMEs.
+For any specific usage instructions, dependencies, or considerations for using the injectors, please click on the technique.
 
 Happy hacking!
 
