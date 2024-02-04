@@ -10,10 +10,10 @@ The loaders and injectors in this repository are tools crafted during OSEP train
 
 | Technique            | Description                      |
 |----------------------|----------------------------------|
-| [Early_Bird](./Injector1) | Description of technique         |
-| [Injector2](./Injector2) | Description of Injector2         |
-| [Injector3](./Injector3) | Description of Injector3         |
-| ...                  | ...                              |
+| [Early_Bird](./early_bird) | Create process and inject code into it before the main thread executes + simple sandbox evasions.          |
+// | [Injector2](./Injector2) | Description of Injector2         |
+// | [Injector3](./Injector3) | Description of Injector3         |
+// | ...                  | ...                              |
 
 ## Usage
 
