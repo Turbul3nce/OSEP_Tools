@@ -1,4 +1,4 @@
-# OSEP Loaders and Injectors
+# OSEP Injectors
 
 This repository contains loaders and injectors developed during the Offensive Security Exploitation Professional (OSEP) exam from Offensive Security's course.
 
