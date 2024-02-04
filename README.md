@@ -1,6 +1,6 @@
 # Overview
 
-This repository is dedicated to tools, code, notes, and tips created and accumulated during the Offensive Security Exploitation Professional (OSEP) training.
+This repository is dedicated to any tools, code, notes, and tips accumulated or created during my Offensive Security Experienced Professional (OSEP) training.
 
 ## Contents
 
