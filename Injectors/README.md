@@ -23,4 +23,4 @@ Happy hacking!
 
 ## Acknowledgements
 
-Credit to Bishop Fox, OffSec, and other students found on GitHub. 
+Credit to Bishop Fox, OffSec, and other students. 
