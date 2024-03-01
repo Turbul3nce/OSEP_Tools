@@ -10,21 +10,10 @@ This repository provides a collection of obfuscation techniques along with code 
 
 ## Directory Structure
 
-- **Technique1**: Explanation and code examples for Technique 1.
-- **Technique2**: Explanation and code examples for Technique 2.
-- **Technique3**: Explanation and code examples for Technique 3.
-- ...
-- **TechniqueN**: Explanation and code examples for Technique N.
+- **Caesar cipher**: The Caesar cipher is one of the simplest and earliest known encryption techniques. It operates by shifting each letter in the plaintext by a fixed number of positions down the alphabet. For example, with a shift of 3 like in my example code.
 
-Each technique directory contains:
-
-- A README.md explaining the technique and its purpose.
-- Code examples demonstrating the implementation of the technique.
-- Additional resources or references for further reading.
 
 ## How to Use
 
-To explore a specific obfuscation technique, navigate to the corresponding directory and refer to the README.md file for detailed instructions and code examples. You can clone the repository to your local machine using Git:
+To explore a specific obfuscation technique, navigate to the corresponding directory and refer to the README.md file for detailed instructions and code examples.
 
-```bash
-git clone https://github.com/your-username/shellcode-obfuscation.git
