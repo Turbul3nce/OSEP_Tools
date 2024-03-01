@@ -4,14 +4,14 @@ This repository contains injectors developed during the Offensive Security Exper
 
 ## Overview
 
-The loaders and injectors in this repository are tools crafted or used during OSEP training for various scenarios and challenges. Each directory represents a distinct injector, designed to assist with injecting malicious code into processes and bypassing AV.
+The loaders and injectors in this repository are tools crafted or used during OSEP training for various scenarios and challenges. Each directory represents different injectors or shellcode runner methods.
 
 ## Injectors => (Pr0ce$$)
 
 | Technique            | Description                      |
 |----------------------|----------------------------------|
 | [Early_Bird](./early_bird) | Create process and inject code into it before the main thread executes + simple sleep sandbox evasion.          |
-// | ... | ...         |
+|[ | ...         |
 // | ... | ...         |
 // | ...                  | ...                              |
 
