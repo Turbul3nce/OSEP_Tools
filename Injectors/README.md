@@ -1,8 +1,4 @@
-# Injectors
-
-This repository contains injectors developed during the Offensive Security Experienced Professional (OSEP) exam from Offensive Security's course.
-
-## Overview
+# Overview
 
 The loaders and injectors in this repository are tools crafted or used during OSEP training for various scenarios and challenges. Each directory represents different injectors or shellcode runner methods.
 
