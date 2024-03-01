@@ -5,7 +5,6 @@ This repository is dedicated to any tools, notes, and tips accumulated during my
 ## Contents
 
 - [Injectors](/Injectors)
-- [Tips](#tips)
 
 ## Usage
 
