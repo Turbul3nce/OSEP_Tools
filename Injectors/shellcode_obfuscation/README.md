@@ -8,12 +8,6 @@ Shellcode obfuscation is the process of modifying shellcode to disguise its true
 
 This repository provides a collection of obfuscation techniques along with code examples and explanations to demonstrate their implementation and effectiveness.
 
-## Directory Structure
+## Encryption Techniques
 
 - **Caesar cipher**: The Caesar cipher is one of the simplest and earliest known encryption techniques. It operates by shifting each letter in the plaintext by a fixed number of positions down the alphabet. For example, with a shift of 3 like in my example code.
-
-
-## How to Use
-
-To explore a specific obfuscation technique, navigate to the corresponding directory and refer to the README.md file for detailed instructions and code examples.
-
