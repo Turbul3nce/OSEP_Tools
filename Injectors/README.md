@@ -6,9 +6,9 @@ The loaders and injectors in this repository are tools crafted or used during OS
 
 | Technique            | Description                      |
 |----------------------|----------------------------------|
-| [Early_Bird](/early_bird) | Create process and inject code into it before the main thread executes + simple sleep sandbox evasion.          |
-| [Injector Templates](/injector_templates) | Several templates in cpp for process injection and shellcode loaders.|
-| [Shellcode Obfuscation](/shellcode_obfuscation) | Several different methods for obfuscating shellcode in an attempt to bypass AV.         |
+| [Early_Bird](early_bird) | Create process and inject code into it before the main thread executes + simple sleep sandbox evasion.          |
+| [Injector Templates](injector_templates) | Several templates in cpp for process injection and shellcode loaders.|
+| [Shellcode Obfuscation](shellcode_obfuscation) | Several different methods for obfuscating shellcode in an attempt to bypass AV.         |
 // | ...                  | ...                              |
 
 
